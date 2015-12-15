@@ -32,9 +32,8 @@ bineffarea=len(offMC)*len(enMC)
 bineffresol=len(offMC)*len(enMC)*binEreco
 
 #reverifier qu ils ont bien ca dans leur bin PA en low edge et upper edge
-off_low=offMC-0.25
-off_low[0]=0
-off_hi=offMC+0.25
+off_low=offMC
+off_hi=offMC
 
 #pour les extremites prendre le milieu des bin en log
 binlnEMC=lnenMC[1:]-lnenMC[:-1]
