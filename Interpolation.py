@@ -3,20 +3,28 @@ import pyfits
 from scipy import interpolate
 import math
 from pyfits import Column
+import sys
+import os
 from glob import glob
 def gauss(x,sigma, mean):
     f=1/(np.sqrt(2*math.pi)*sigma)*np.exp(-(x-mean)**2/(2*sigma**2))
     return f
 
-#ZenRun=63
-#EffRun=90
-listrun = [file[5:11] for file in glob('run*.fits')]
-#listrun=[12333]
+"""
+Commande a lancer pour pouvoir donner des arguments au scripts
+"""
+#%run Interpolation.py '/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/CrabEventList/Crab' 'std_north_1b'
+
+
+PathListRun = sys.argv[1]
+ListRunDirectory = glob(PathListRun+'/run*.fits')
+RunNumber = [file.split('/')[-1][5:11] for file in ListRunDirectory]
 
 
 #Load les info sur les MCs depuis la table d'IRF ou est stocke pour toutes les nergies, zenith,offset et efficacite des MCs la valeur des la surface efficiace, et du biais et sigma pour la resolution
-coupure="std_north_1b"
-IRF=np.load("IRF"+coupure+".npz")
+PathTableIRF="/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/CrabEventList/Crab"
+coupure=sys.argv[2]
+IRF=np.load(PathTableIRF+"/IRF"+coupure+".npz")
 IRFArea=IRF["TableArea"]
 IRFSigma=IRF["TableSigma"]
 IRFBiais=IRF["TableBiais"]
@@ -57,7 +65,7 @@ Etrue_reco=pow(10,lnEtrue_reco)
 E_true_reco_low=pow(10,lnE_true_reco_low)
 E_true_reco_hi=pow(10,lnE_true_reco_up)
 
-for nrun in listrun:
+for nrun in RunNumber:
     AreaRun=np.zeros((binoffMC,binEMC))
     ResolRun=np.zeros((binoffMC,binEreco,binEMC))
     namerun = "run_0"+nrun+"_std_north_1b_eventlist.fits"
