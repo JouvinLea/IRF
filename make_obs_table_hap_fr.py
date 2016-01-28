@@ -1,6 +1,8 @@
 from astropy.io import fits
 from astropy.table import Table
 from astropy.coordinates import Angle, SkyCoord
+import numpy as np
+import math
 from glob import glob
 
 # Write minimal files and observations table needed for the gammapy data store
@@ -69,7 +71,8 @@ for obs in obs_ids:
     data['AZ'] = header['AZ_PNT']
     data['N_TELS'] = header['N_TELS']
     data['MUONEFF'] = header['MUONEFF']
-    data['ZEN'] = 90 - header['ALT_PNT'] 
+    data['ZEN'] = 90 - header['ALT_PNT']
+    data['CosZEN'] = np.cos(data['ZEN'] * math.pi / 180.) 
     rows.append(data)
 
 table = Table(rows=rows)
@@ -78,7 +81,8 @@ table['ALT'].unit = "deg"
 table['AZ'] .unit = "deg" 
 table['N_TELS'].unit = "" 
 table['MUONEFF'].unit = "" 
-table['ZEN'].unit = "deg" 
+table['ZEN'].unit = "deg"
+table['CosZEN'].unit = "" 
 table.meta['MJDREFI'] = 51544
 table.meta['MJDREFF'] = 0.5
 table.write("observations.fits.gz", overwrite=True)
