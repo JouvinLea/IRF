@@ -12,7 +12,7 @@ from glob import glob
 #listfile = glob('run*.fits')
 #La commande en dessous permet d'avoir les runs number car on sait que le numero du run pour les fits de bruno se trouver entre le 5eme et 11eme caractere 
 obs_ids = [int(file[6:11]) for file in glob('run*.fits')]
-file_types = ['events', 'aeff', 'edisp']
+file_types = ['events', 'aeff', 'edisp', 'psf']
 
 # FILE TABLE
 
@@ -23,6 +23,8 @@ for obs in obs_ids:
         if filetype == 'events':
 #            name = "run_0"+obs+"_std_north_1b_eventlist.fits"
             name = "run_0{:06d}_std_north_1b_eventlist.fits".format(obs)
+        elif(filetype == 'psf'):
+            name = "hess_{}_{:06d}.fits".format(filetype, obs)
         else:
 #            name = "hess_" + filetype + "_2d_" + obs + ".fits"
             name = "hess_{}_2d_{:06d}.fits".format(filetype, obs)
