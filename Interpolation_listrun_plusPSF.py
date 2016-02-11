@@ -23,7 +23,7 @@ ListRunDirectory = glob(PathListRun+'/run*.fits')
 RunNumber = [file.split('/')[-1][5:11] for file in ListRunDirectory]
 
 
-#Load les info sur les MCs depuis la table d'IRF ou est stocke pour toutes les nergies, zenith,offset et efficacite des MCs la valeur des la surface efficiace, et du biais et sigma pour la resolution
+#Load les info sur les MCs depuis la table d'IRF ou est stocke pour toutes les nergies, zenith,offset et efficacite des MCs la valeur des la surface efficiace, du biais et sigma pour la resolution et du s1, s2, s3, A2, A3 de la tripplegauss utilisee pour fitter la psf
 PathTableIRF="/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/CrabEventList/Crab"
 PathTablePSF="/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/PSF"
 
@@ -123,14 +123,9 @@ for nrun in RunNumber:
             ResolRun[ioff, : ,iEMC]=gauss(lnEtrue_reco,SigmaRun,BiaisRun)
             #etre sur que c est bien normalise
             norm=np.sum(ResolRun[ioff, : ,iEMC]*(E_true_reco_hi-E_true_reco_low))            
-            #print norm
             
             if(np.isnan(norm)):
-                #print nrun
-                #print ioff
-                #print iEMC
                 ResolRun[ioff, : ,iEMC]=0
-                #print norm
             else:
                 ResolRun[ioff, : ,iEMC]=ResolRun[ioff, : ,iEMC]/norm
                 
@@ -144,7 +139,8 @@ for nrun in RunNumber:
                 PSFSigRun[ioff,iEMC]=InterSig(EffRun,np.cos(ZenRun*math.pi/180))
                 PSFGamRun[ioff,iEMC]=InterGam(EffRun,np.cos(ZenRun*math.pi/180))
         
-
+    #Ecriture des fichiers fits pour aeff, edisp et psf pour chaque observation
+    #AEFF FITS FILE
     c1_area = Column(name='ENERG_LO', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_low))
     c2_area = Column(name='ENERG_HI', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_up))
     c3_area = Column(name='THETA_LO', format=str(binoffMC)+'E', unit='deg', array=np.atleast_2d(off_low))
@@ -165,7 +161,7 @@ for nrun in RunNumber:
     #tbhdu_area.header["EXTNAME"]='EFFECTIVE AREA'
     tbhdu_area.writeto('hess_aeff_2d_'+nrun+'.fits')
 
-
+    #EDISP FITS FILE
     c1_resol = Column(name='ETRUE_LO', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_low))
     c2_resol = Column(name='ETRUE_HI', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_up))
     c3_resol = Column(name='MIGRA_LO', format=str(binEreco)+'E', unit='', array=np.atleast_2d(E_true_reco_low))
@@ -184,7 +180,7 @@ for nrun in RunNumber:
     #tbhdu_resol.header["EXTNAME"]='EFFECTIVE RESOL'
     tbhdu_resol.writeto('hess_edisp_2d_'+nrun+'.fits')
 
-
+    #PSF FITS FILE
     c1_psf = Column(name='ENERG_LO', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_low))
     c2_psf = Column(name='ENERG_HI', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_up))
     c3_psf = Column(name='THETA_LO', format=str(binoffMC)+'E', unit='deg', array=np.atleast_2d(off_low))
