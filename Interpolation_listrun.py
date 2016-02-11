@@ -13,7 +13,7 @@ def gauss(x,sigma, mean):
 """
 Commande a lancer pour pouvoir donner des arguments au scripts
 """
-#%run Interpolation.py '/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/CrabEventList/Crab' 'std_north_1b'
+#%run Interpolation_listrun.py '/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/CrabEventList/Crab' 'std_north_1b'
 
 
 PathListRun = sys.argv[1]
