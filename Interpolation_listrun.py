@@ -6,14 +6,16 @@ from pyfits import Column
 import sys
 import os
 from glob import glob
+
 def gauss(x,sigma, mean):
     f=1/(np.sqrt(2*math.pi)*sigma)*np.exp(-(x-mean)**2/(2*sigma**2))
     return f
 
+
 """
 Commande a lancer pour pouvoir donner des arguments au scripts
 """
-#%run Interpolation_listrun.py '/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/CrabEventList/Crab' 'std_north_1b'
+#%run Interpolation_listrun.py '/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/CrabEventList/Crab' 'std_north_1b' 'triplegauss'
 
 
 PathListRun = sys.argv[1]
@@ -21,9 +23,12 @@ ListRunDirectory = glob(PathListRun+'/run*.fits')
 RunNumber = [file.split('/')[-1][5:11] for file in ListRunDirectory]
 
 
-#Load les info sur les MCs depuis la table d'IRF ou est stocke pour toutes les nergies, zenith,offset et efficacite des MCs la valeur des la surface efficiace, et du biais et sigma pour la resolution
+#Load les info sur les MCs depuis la table d'IRF ou est stocke pour toutes les nergies, zenith,offset et efficacite des MCs la valeur des la surface efficiace, du biais et sigma pour la resolution et du s1, s2, s3, A2, A3 de la tripplegauss utilisee pour fitter la psf
 PathTableIRF="/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/CrabEventList/Crab"
+PathTablePSF="/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/PSF"
+
 coupure=sys.argv[2]
+PSFtype=sys.argv[3]
 IRF=np.load(PathTableIRF+"/IRF"+coupure+".npz")
 IRFArea=IRF["TableArea"]
 IRFSigma=IRF["TableSigma"]
@@ -33,6 +38,21 @@ lnenMC=IRF["lnenMC"]
 zenMC=IRF["zenMC"]
 effMC=IRF["effMC"]
 offMC=IRF["offMC"]
+if(PSFtype=="triplegauss"):
+    #PSF=np.load(PathTablePSF+"/PSF_triplegauss_"+coupure+".npz")
+    PSF=np.load(PathTablePSF+"/PSF_triplegauss_elm_south_stereo_save.npz")
+    PSFs1=PSF["TableSigma1"]
+    PSFs2=PSF["TableSigma2"]
+    PSFs3=PSF["TableSigma3"]
+    PSFA2=PSF["TableA2"]
+    PSFA3=PSF["TableA3"]
+elif(PSFtype=="king"):
+    PSF=np.load(PathTablePSF+"/PSF_king_"+coupure+".npz")
+    PSFSig=PSF["TableSig"]
+    PSFGam=PSF["TableGam"]
+else:
+    print "No function given for the PSF"
+
 binoffMC=len(offMC)
 binEMC=len(enMC)
 binEreco=50
@@ -67,6 +87,16 @@ E_true_reco_hi=pow(10,lnE_true_reco_up)
 
 for nrun in RunNumber:
     AreaRun=np.zeros((binoffMC,binEMC))
+    if(PSFtype=="triplegauss"):
+        PSFS1Run=np.zeros((binoffMC,binEMC))
+        PSFS2Run=np.zeros((binoffMC,binEMC))
+        PSFS3Run=np.zeros((binoffMC,binEMC))
+        PSFA2Run=np.zeros((binoffMC,binEMC))
+        PSFA3Run=np.zeros((binoffMC,binEMC))
+    elif(PSFtype=="king"):
+        PSFSigRun=np.zeros((binoffMC,binEMC))
+        PSFGamRun=np.zeros((binoffMC,binEMC))
+    
     ResolRun=np.zeros((binoffMC,binEreco,binEMC))
     namerun = "run_0"+nrun+"_std_north_1b_eventlist.fits"
     hdurun=pyfits.open(namerun)
@@ -78,29 +108,43 @@ for nrun in RunNumber:
             InterArea=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),IRFArea[iEMC,ioff,:,:])
             InterBiais=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),IRFBiais[iEMC, ioff,:,:])
             InterSigma=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),IRFSigma[iEMC, ioff,:,:])
+            if(PSFtype=="triplegauss"):
+                InterS1=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFs1[iEMC,ioff,:,:], fill_value="None")
+                InterS2=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFs2[iEMC,ioff,:,:], fill_value="None")
+                InterS3=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFs3[iEMC,ioff,:,:], fill_value="None")
+                InterA2=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFA2[iEMC,ioff,:,:], fill_value="None")
+                InterA3=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFA3[iEMC,ioff,:,:], fill_value="None")
+            elif(PSFtype=="king"):
+                InterSig=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFSig[iEMC,ioff,:,:])
+                InterGam=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFGam[iEMC,ioff,:,:])
             AreaRun[ioff,iEMC]=InterArea(EffRun,np.cos(ZenRun*math.pi/180))
             BiaisRun=InterBiais(EffRun,np.cos(ZenRun*math.pi/180))
             SigmaRun=InterSigma(EffRun,np.cos(ZenRun*math.pi/180))
             ResolRun[ioff, : ,iEMC]=gauss(lnEtrue_reco,SigmaRun,BiaisRun)
             #etre sur que c est bien normalise
             norm=np.sum(ResolRun[ioff, : ,iEMC]*(E_true_reco_hi-E_true_reco_low))            
-            print norm
             
             if(np.isnan(norm)):
-                #print nrun
-                #print ioff
-                #print iEMC
                 ResolRun[ioff, : ,iEMC]=0
-                #print norm
             else:
                 ResolRun[ioff, : ,iEMC]=ResolRun[ioff, : ,iEMC]/norm
                 
-                
-
+            if(PSFtype=="triplegauss"):
+                PSFS1Run[ioff,iEMC]=InterS1(EffRun,np.cos(ZenRun*math.pi/180))
+                PSFS2Run[ioff,iEMC]=InterS2(EffRun,np.cos(ZenRun*math.pi/180))
+                PSFS3Run[ioff,iEMC]=InterS3(EffRun,np.cos(ZenRun*math.pi/180))
+                PSFA2Run[ioff,iEMC]=InterA2(EffRun,np.cos(ZenRun*math.pi/180))
+                PSFA3Run[ioff,iEMC]=InterA3(EffRun,np.cos(ZenRun*math.pi/180))
+            elif(PSFtype=="king"):
+                PSFSigRun[ioff,iEMC]=InterSig(EffRun,np.cos(ZenRun*math.pi/180))
+                PSFGamRun[ioff,iEMC]=InterGam(EffRun,np.cos(ZenRun*math.pi/180))
+        
+    #Ecriture des fichiers fits pour aeff, edisp et psf pour chaque observation
+    #AEFF FITS FILE
     c1_area = Column(name='ENERG_LO', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_low))
     c2_area = Column(name='ENERG_HI', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_up))
-    c3_area = Column(name='THETA_LO', format=str(binoffMC)+'E', unit='TeV', array=np.atleast_2d(off_low))
-    c4_area = Column(name='THETA_HI', format=str(binoffMC)+'E', unit='TeV', array=np.atleast_2d(off_hi))
+    c3_area = Column(name='THETA_LO', format=str(binoffMC)+'E', unit='deg', array=np.atleast_2d(off_low))
+    c4_area = Column(name='THETA_HI', format=str(binoffMC)+'E', unit='def', array=np.atleast_2d(off_hi))
     c5_area = Column(name='EFFAREA', format=str(bineffarea)+'E', unit='TeV', array=np.expand_dims(AreaRun,0))
     c6_area = Column(name='EFFAREA_RECO', format=str(bineffarea)+'E', unit='TeV', array=np.expand_dims(AreaRun,0))
     tbhdu_area = pyfits.BinTableHDU.from_columns([c1_area,c2_area,c3_area,c4_area,c5_area,c6_area])
@@ -117,7 +161,7 @@ for nrun in RunNumber:
     #tbhdu_area.header["EXTNAME"]='EFFECTIVE AREA'
     tbhdu_area.writeto('hess_aeff_2d_'+nrun+'.fits')
 
-
+    #EDISP FITS FILE
     c1_resol = Column(name='ETRUE_LO', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_low))
     c2_resol = Column(name='ETRUE_HI', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_up))
     c3_resol = Column(name='MIGRA_LO', format=str(binEreco)+'E', unit='', array=np.atleast_2d(E_true_reco_low))
@@ -136,3 +180,23 @@ for nrun in RunNumber:
     #tbhdu_resol.header["EXTNAME"]='EFFECTIVE RESOL'
     tbhdu_resol.writeto('hess_edisp_2d_'+nrun+'.fits')
 
+    #PSF FITS FILE
+    c1_psf = Column(name='ENERG_LO', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_low))
+    c2_psf = Column(name='ENERG_HI', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_up))
+    c3_psf = Column(name='THETA_LO', format=str(binoffMC)+'E', unit='deg', array=np.atleast_2d(off_low))
+    c4_psf = Column(name='THETA_HI', format=str(binoffMC)+'E', unit='deg', array=np.atleast_2d(off_hi))
+    if(PSFtype=="triplegauss"):
+        norm=2*np.pi*(PSFS1Run**2+PSFA2Run*PSFS2Run**2+PSFA3Run*PSFS3Run**2)
+        c5_psf = Column(name='SIGMA_1', format=str(bineffarea)+'E', unit='deg', array=np.expand_dims(PSFS1Run,0))
+        c6_psf = Column(name='AMPL_2', format=str(bineffarea)+'E', unit='', array=np.expand_dims(PSFA2Run,0))
+        c7_psf = Column(name='SIGMA_2', format=str(bineffarea)+'E', unit='deg', array=np.expand_dims(PSFS2Run,0))
+        c8_psf = Column(name='AMPL_3', format=str(bineffarea)+'E', unit='', array=np.expand_dims(PSFA3Run,0))
+        c9_psf = Column(name='SIGMA_3', format=str(bineffarea)+'E', unit='deg', array=np.expand_dims(PSFS3Run,0))
+        c10_psf = Column(name='SCALE', format=str(bineffarea)+'E', unit='', array=np.expand_dims(1/norm,0))
+        tbhdu_psf = pyfits.BinTableHDU.from_columns([c1_psf, c2_psf, c3_psf, c4_psf, c5_psf, c6_psf, c7_psf, c8_psf, c9_psf, c10_psf]) 
+    elif(PSFtype=="king"):
+        c5_psf = Column(name='GAMMA', format=str(bineffarea)+'E', unit='', array=np.expand_dims(PSFGamRun,0))
+        c5_psf = Column(name='SIGMA', format=str(bineffarea)+'E', unit='deg', array=np.expand_dims(PSFSigRun,0))
+        tbhdu_psf = pyfits.BinTableHDU.from_columns([c1_psf,c2_psf,c3_psf,c4_psf,c5_psf])      
+    tbhdu_psf.header.set("EXTNAME","PSF_2D", "name of this binary table extension ")
+    tbhdu_psf.writeto('hess_psf_'+nrun+'.fits')
