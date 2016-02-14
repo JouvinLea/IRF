@@ -121,9 +121,11 @@ if __name__ == '__main__':
             if (PSFtype == "triplegauss"):
                 #interpol_param = dict(fill_value=None)
                 ind_zen, ind_eff= np.where(PSFs1[iEMC, ioff, :, :] != -1)
-                if((len(ind_zen)!=0) & (len(ind_zen)>4)):
+                #Il faut qu il y ait au moins 4 eff et 4 zen pour que interp marche
+                if(len(ind_zen)>4):
                     zensame=np.where(ind_zen != ind_zen[0])
                     effsame=np.where(ind_eff != ind_eff[0])
+                    #Dans les minimum 4 valeurs, Il faut pas qu il y ait les memes valeurs en zenith et en eff pour toutes les simus
                     if((len(zensame[0])!=0) & (len(effsame[0])!=0)):
                         coord_eff=effMC[ind_eff]
                         coord_zen = zenMC[ind_zen]
@@ -133,7 +135,7 @@ if __name__ == '__main__':
                         InterA2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA2[iEMC, ioff, ind_zen, ind_eff],fill_value=None)
                         InterA3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA3[iEMC, ioff, ind_zen, ind_eff],fill_value=None)
             elif (PSFtype == "king"):
-               if((len(ind_zen)!=0) & (len(ind_zen)>4)):
+               if(len(ind_zen)>4):
                     if((len(zensame[0])!=0) & (len(effsame[0])!=0)): 
                         InterSig = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFSig[iEMC, ioff, ind_zen, ind_eff])
                         InterGam = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFGam[iEMC, ioff, ind_zen, ind_eff])
@@ -150,7 +152,7 @@ if __name__ == '__main__':
                 ResolRun[ioff, :, iEMC] = ResolRun[ioff, :, iEMC] / norm
 
             if (PSFtype == "triplegauss"):
-                if((len(ind_zen)!=0) & (len(ind_zen)>4)):
+                if(len(ind_zen)>4):
                     if((len(zensame[0])!=0) & (len(effsame[0])!=0)):
                         PSFS1Run[ioff, iEMC] = InterS1(EffRun, np.cos(ZenRun * math.pi / 180))
                         PSFS2Run[ioff, iEMC] = InterS2(EffRun, np.cos(ZenRun * math.pi / 180))
@@ -163,8 +165,14 @@ if __name__ == '__main__':
                         PSFS3Run[ioff, iEMC] = -1
                         PSFA2Run[ioff, iEMC] = -1
                         PSFA3Run[ioff, iEMC] = -1
+                else:
+                    PSFS1Run[ioff, iEMC] = -1
+                    PSFS2Run[ioff, iEMC] = -1
+                    PSFS3Run[ioff, iEMC] = -1
+                    PSFA2Run[ioff, iEMC] = -1
+                    PSFA3Run[ioff, iEMC] = -1
             elif (PSFtype == "king"):
-                if((len(ind_zen)!=0) & (len(ind_zen)>4)):
+                if(len(ind_zen)>4):
                     if((len(zensame[0])!=0) & (len(effsame[0])!=0)):
                         PSFSigRun[ioff, iEMC] = InterSig(EffRun, np.cos(ZenRun * math.pi / 180))
                         PSFGamRun[ioff, iEMC] = InterGam(EffRun, np.cos(ZenRun * math.pi / 180))
