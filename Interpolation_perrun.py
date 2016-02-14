@@ -119,22 +119,23 @@ if __name__ == '__main__':
             InterBiais = interpolate.interp2d(effMC, np.cos(zenMC * math.pi / 180), IRFBiais[iEMC, ioff, :, :])
             InterSigma = interpolate.interp2d(effMC, np.cos(zenMC * math.pi / 180), IRFSigma[iEMC, ioff, :, :])
             if (PSFtype == "triplegauss"):
-                effgrid, zengrid= np.meshgrid(effMC_psf, zenMC_psf)
-                coord_eff= effgrid.flatten()
-                coord_zen = zengrid.flatten()
-                InterS1 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs1[iEMC, ioff, :, :].flatten(),
+                ind_zen, ind_eff= np.where(PSFs1[iEMC, ioff, :, :] != -1)
+
+                coord_eff=effMC[ind_eff]
+                coord_zen = zenMC[ind_zen]
+                InterS1 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs1[iEMC, ioff, ind_zen, ind_eff],
                                                fill_value=None)
-                InterS2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs2[iEMC, ioff, :, :].flatten(),
+                InterS2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs2[iEMC, ioff, ind_zen, ind_eff],
                                                fill_value=None)
-                InterS3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs3[iEMC, ioff, :, :].flatten(),
+                InterS3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs3[iEMC, ioff, ind_zen, ind_eff],
                                                fill_value=None)
-                InterA2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA2[iEMC, ioff, :, :].flatten(),
+                InterA2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA2[iEMC, ioff, ind_zen, ind_eff],
                                                fill_value=None)
-                InterA3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA3[iEMC, ioff, :, :].flatten(),
+                InterA3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA3[iEMC, ioff, ind_zen, ind_eff],
                                                fill_value=None)
             elif (PSFtype == "king"):
-                InterSig = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFSig[iEMC, ioff, :, :].flatten())
-                InterGam = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFGam[iEMC, ioff, :, :].flatten())
+                InterSig = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFSig[iEMC, ioff, ind_zen, ind_eff])
+                InterGam = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFGam[iEMC, ioff, ind_zen, ind_eff])
             AreaRun[ioff, iEMC] = InterArea(EffRun, np.cos(ZenRun * math.pi / 180))
             BiaisRun = InterBiais(EffRun, np.cos(ZenRun * math.pi / 180))
             SigmaRun = InterSigma(EffRun, np.cos(ZenRun * math.pi / 180))
