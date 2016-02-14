@@ -120,22 +120,23 @@ if __name__ == '__main__':
             InterSigma = interpolate.interp2d(effMC, np.cos(zenMC * math.pi / 180), IRFSigma[iEMC, ioff, :, :])
             if (PSFtype == "triplegauss"):
                 ind_zen, ind_eff= np.where(PSFs1[iEMC, ioff, :, :] != -1)
-
-                coord_eff=effMC[ind_eff]
-                coord_zen = zenMC[ind_zen]
-                InterS1 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs1[iEMC, ioff, ind_zen, ind_eff],
-                                               fill_value=None)
-                InterS2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs2[iEMC, ioff, ind_zen, ind_eff],
-                                               fill_value=None)
-                InterS3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs3[iEMC, ioff, ind_zen, ind_eff],
-                                               fill_value=None)
-                InterA2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA2[iEMC, ioff, ind_zen, ind_eff],
-                                               fill_value=None)
-                InterA3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA3[iEMC, ioff, ind_zen, ind_eff],
-                                               fill_value=None)
+                if(len(ind_zen)!=0):
+                    coord_eff=effMC[ind_eff]
+                    coord_zen = zenMC[ind_zen]
+                    InterS1 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs1[iEMC, ioff, ind_zen, ind_eff],
+                                                   fill_value=None)
+                    InterS2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs2[iEMC, ioff, ind_zen, ind_eff],
+                                                   fill_value=None)
+                    InterS3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs3[iEMC, ioff, ind_zen, ind_eff],
+                                                   fill_value=None)
+                    InterA2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA2[iEMC, ioff, ind_zen, ind_eff],
+                                                   fill_value=None)
+                    InterA3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA3[iEMC, ioff, ind_zen, ind_eff],
+                                                   fill_value=None)
             elif (PSFtype == "king"):
-                InterSig = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFSig[iEMC, ioff, ind_zen, ind_eff])
-                InterGam = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFGam[iEMC, ioff, ind_zen, ind_eff])
+                if(len(ind_zen)!=0):
+                    InterSig = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFSig[iEMC, ioff, ind_zen, ind_eff])
+                    InterGam = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFGam[iEMC, ioff, ind_zen, ind_eff])
             AreaRun[ioff, iEMC] = InterArea(EffRun, np.cos(ZenRun * math.pi / 180))
             BiaisRun = InterBiais(EffRun, np.cos(ZenRun * math.pi / 180))
             SigmaRun = InterSigma(EffRun, np.cos(ZenRun * math.pi / 180))
@@ -149,14 +150,26 @@ if __name__ == '__main__':
                 ResolRun[ioff, :, iEMC] = ResolRun[ioff, :, iEMC] / norm
 
             if (PSFtype == "triplegauss"):
-                PSFS1Run[ioff, iEMC] = InterS1(EffRun, np.cos(ZenRun * math.pi / 180))
-                PSFS2Run[ioff, iEMC] = InterS2(EffRun, np.cos(ZenRun * math.pi / 180))
-                PSFS3Run[ioff, iEMC] = InterS3(EffRun, np.cos(ZenRun * math.pi / 180))
-                PSFA2Run[ioff, iEMC] = InterA2(EffRun, np.cos(ZenRun * math.pi / 180))
-                PSFA3Run[ioff, iEMC] = InterA3(EffRun, np.cos(ZenRun * math.pi / 180))
+                if(len(ind_zen)!=0):
+                    PSFS1Run[ioff, iEMC] = InterS1(EffRun, np.cos(ZenRun * math.pi / 180))
+                    PSFS2Run[ioff, iEMC] = InterS2(EffRun, np.cos(ZenRun * math.pi / 180))
+                    PSFS3Run[ioff, iEMC] = InterS3(EffRun, np.cos(ZenRun * math.pi / 180))
+                    PSFA2Run[ioff, iEMC] = InterA2(EffRun, np.cos(ZenRun * math.pi / 180))
+                    PSFA3Run[ioff, iEMC] = InterA3(EffRun, np.cos(ZenRun * math.pi / 180))
+                else:
+                    PSFS1Run[ioff, iEMC] = -1
+                    PSFS2Run[ioff, iEMC] = -1
+                    PSFS3Run[ioff, iEMC] = -1
+                    PSFA2Run[ioff, iEMC] = -1
+                    PSFA3Run[ioff, iEMC] = -1
             elif (PSFtype == "king"):
-                PSFSigRun[ioff, iEMC] = InterSig(EffRun, np.cos(ZenRun * math.pi / 180))
-                PSFGamRun[ioff, iEMC] = InterGam(EffRun, np.cos(ZenRun * math.pi / 180))
+                if(len(ind_zen)!=0):
+                    PSFSigRun[ioff, iEMC] = InterSig(EffRun, np.cos(ZenRun * math.pi / 180))
+                    PSFGamRun[ioff, iEMC] = InterGam(EffRun, np.cos(ZenRun * math.pi / 180))
+                else:
+                    PSFSigRun[ioff, iEMC] = -1
+                    PSFGamRun[ioff, iEMC] = -1
+                    
 
     # Ecriture des fichiers fits pour aeff, edisp et psf pour chaque observation
     # AEFF FITS FILE
