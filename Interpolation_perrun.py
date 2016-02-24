@@ -111,21 +111,24 @@ if __name__ == '__main__':
     hdurun = pyfits.open(results.infile)
     ZenRun = 90 - hdurun[1].header["ALT_PNT"]
     EffRun = hdurun[1].header["MUONEFF"] * 100
+    enMC=[0.125]
+    offMC=[2]
     for (iEMC, EMC) in enumerate(enMC):
         for (ioff, off) in enumerate(offMC):
             # print ioff, " ", iEMC
-            
+            iEMC=4
+            ioff=4
             InterArea = interpolate.interp2d(effMC, np.cos(zenMC * math.pi / 180), IRFArea[iEMC, ioff, :, :])
             InterBiais = interpolate.interp2d(effMC, np.cos(zenMC * math.pi / 180), IRFBiais[iEMC, ioff, :, :])
             InterSigma = interpolate.interp2d(effMC, np.cos(zenMC * math.pi / 180), IRFSigma[iEMC, ioff, :, :])
             if (PSFtype == "triplegauss"):
                 #interpol_param = dict(fill_value=None)
                 ind_zen, ind_eff= np.where(PSFs1[iEMC, ioff, :, :] != -1)
-                #Il faut qu il y ait au moins 4 eff et 4 zen pour que interp marche
+                #Il faut qu il y ait au moins 4 eff et 4 zen pour que interp2d marche. en effet dans la doc de interp2d ils disent: The minimum number of data points required along the interpolation axis is (k+1)**2, with k=1 for linear
                 if(len(ind_zen)>4):
+                    #Dans les minimum 4 valeurs, Il faut pas qu il y ait les memes valeurs en zenith et en eff pour toutes les simus. Du coup je regarde si il y a dans le tableau zen et eff si il y a des valeurs differentes de la premiere. Si non, ca veut dire qu'elles sont toutes egales et interp2d marche pas donc on met -1
                     zensame=np.where(ind_zen != ind_zen[0])
-                    effsame=np.where(ind_eff != ind_eff[0])
-                    #Dans les minimum 4 valeurs, Il faut pas qu il y ait les memes valeurs en zenith et en eff pour toutes les simus
+                    effsame=np.where(ind_eff != ind_eff[0])                    
                     if((len(zensame[0])!=0) & (len(effsame[0])!=0)):
                         coord_eff=effMC[ind_eff]
                         coord_zen = zenMC[ind_zen]
@@ -156,9 +159,17 @@ if __name__ == '__main__':
                     if((len(zensame[0])!=0) & (len(effsame[0])!=0)):
                         PSFS1Run[ioff, iEMC] = InterS1(EffRun, np.cos(ZenRun * math.pi / 180))
                         PSFS2Run[ioff, iEMC] = InterS2(EffRun, np.cos(ZenRun * math.pi / 180))
-                        PSFS3Run[ioff, iEMC] = InterS3(EffRun, np.cos(ZenRun * math.pi / 180))
+                        PSFS3Run[ioff, iEMC] = InterS3(EffRun, np.cos(ZenRun * math.pi / 180))           
                         PSFA2Run[ioff, iEMC] = InterA2(EffRun, np.cos(ZenRun * math.pi / 180))
                         PSFA3Run[ioff, iEMC] = InterA3(EffRun, np.cos(ZenRun * math.pi / 180))
+                        
+                        if((PSFS1Run[ioff, iEMC]<=0) | (PSFS1Run[ioff, iEMC]<=0)| (PSFS1Run[ioff, iEMC]<=0)| (PSFS1Run[ioff, iEMC]<=0)| (PSFS1Run[ioff, iEMC]<=0)):
+                            PSFS1Run[ioff, iEMC]=-1
+                            PSFS2Run[ioff, iEMC]=-1
+                            PSFS3Run[ioff, iEMC]=-1
+                            PSFA2Run[ioff, iEMC]=-1
+                            PSFA3Run[ioff, iEMC]=-1
+                        
                     else:
                         PSFS1Run[ioff, iEMC] = -1
                         PSFS2Run[ioff, iEMC] = -1
@@ -201,7 +212,7 @@ if __name__ == '__main__':
     tbhdu_area.header.set("LO_THRES", "0.320357620716095", "TeV")
     tbhdu_area.header.set("HI_THRES", "31.1716079711914", "TeV")
     # tbhdu_area.header["EXTNAME"]='EFFECTIVE AREA'
-    tbhdu_area.writeto('hess_aeff_2d_' + nrun + '.fits')
+    tbhdu_area.writeto('hess_aeff_2d_' + nrun + '.fits', clobber=True)
 
     # EDISP FITS FILE
     c1_resol = Column(name='ETRUE_LO', format=str(binEMC) + 'E', unit='TeV', array=np.atleast_2d(E_true_low))
@@ -221,7 +232,7 @@ if __name__ == '__main__':
     tbhdu_resol.header.set("EXTNAME", "EDISP_2D", "name of this binary table extension ")
     tbhdu_resol.header.set("TDIM7", "(" + str(binEMC) + "," + str(binEreco) + "," + str(binoffMC) + ")")
     # tbhdu_resol.header["EXTNAME"]='EFFECTIVE RESOL'
-    tbhdu_resol.writeto('hess_edisp_2d_' + nrun + '.fits')
+    tbhdu_resol.writeto('hess_edisp_2d_' + nrun + '.fits', clobber=True)
 
     # PSF FITS FILE
     c1_psf = Column(name='ENERG_LO', format=str(binEMC) + 'E', unit='TeV', array=np.atleast_2d(E_true_low))
@@ -244,4 +255,4 @@ if __name__ == '__main__':
         c5_psf = Column(name='SIGMA', format=str(bineffarea) + 'E', unit='deg', array=np.expand_dims(PSFSigRun, 0))
         tbhdu_psf = pyfits.BinTableHDU.from_columns([c1_psf, c2_psf, c3_psf, c4_psf, c5_psf])
     tbhdu_psf.header.set("EXTNAME", "PSF_2D", "name of this binary table extension ")
-    tbhdu_psf.writeto('hess_psf_' + nrun + '.fits')
+    tbhdu_psf.writeto('hess_psf_' + nrun + '.fits', clobber=True)
