@@ -146,6 +146,7 @@ if __name__ == '__main__':
                         points= (coord_eff, np.cos(coord_zen * math.pi / 180))
 
                         PSFS1Run[ioff, iEMC] = interpolate.griddata(points, PSFs1[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        #If this is nan that means we are outside the range of the interpolator and we want to use nearest to extrapolate
                         if np.isnan(PSFS1Run[ioff, iEMC]):
                             PSFS1Run[ioff, iEMC] = interpolate.griddata(points, PSFs1[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
                             
