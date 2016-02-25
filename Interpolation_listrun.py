@@ -108,15 +108,6 @@ for nrun in RunNumber:
             InterArea=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),IRFArea[iEMC,ioff,:,:])
             InterBiais=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),IRFBiais[iEMC, ioff,:,:])
             InterSigma=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),IRFSigma[iEMC, ioff,:,:])
-            if(PSFtype=="triplegauss"):
-                InterS1=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFs1[iEMC,ioff,:,:], fill_value="None")
-                InterS2=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFs2[iEMC,ioff,:,:], fill_value="None")
-                InterS3=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFs3[iEMC,ioff,:,:], fill_value="None")
-                InterA2=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFA2[iEMC,ioff,:,:], fill_value="None")
-                InterA3=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFA3[iEMC,ioff,:,:], fill_value="None")
-            elif(PSFtype=="king"):
-                InterSig=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFSig[iEMC,ioff,:,:])
-                InterGam=interpolate.interp2d(effMC,np.cos(zenMC*math.pi/180),PSFGam[iEMC,ioff,:,:])
             AreaRun[ioff,iEMC]=InterArea(EffRun,np.cos(ZenRun*math.pi/180))
             BiaisRun=InterBiais(EffRun,np.cos(ZenRun*math.pi/180))
             SigmaRun=InterSigma(EffRun,np.cos(ZenRun*math.pi/180))
@@ -129,16 +120,60 @@ for nrun in RunNumber:
             else:
                 ResolRun[ioff, : ,iEMC]=ResolRun[ioff, : ,iEMC]/norm
                 
-            if(PSFtype=="triplegauss"):
-                PSFS1Run[ioff,iEMC]=InterS1(EffRun,np.cos(ZenRun*math.pi/180))
-                PSFS2Run[ioff,iEMC]=InterS2(EffRun,np.cos(ZenRun*math.pi/180))
-                PSFS3Run[ioff,iEMC]=InterS3(EffRun,np.cos(ZenRun*math.pi/180))
-                PSFA2Run[ioff,iEMC]=InterA2(EffRun,np.cos(ZenRun*math.pi/180))
-                PSFA3Run[ioff,iEMC]=InterA3(EffRun,np.cos(ZenRun*math.pi/180))
-            elif(PSFtype=="king"):
-                PSFSigRun[ioff,iEMC]=InterSig(EffRun,np.cos(ZenRun*math.pi/180))
-                PSFGamRun[ioff,iEMC]=InterGam(EffRun,np.cos(ZenRun*math.pi/180))
-        
+            
+            if (PSFtype == "triplegauss"):
+                ind_zen, ind_eff= np.where(PSFs1[iEMC, ioff, :, :] != -1)
+                #If there is at least one simu for this offset and this energy for wich the fit works
+                if(len(ind_zen)!=0):
+                    zensame=np.where(ind_zen != ind_zen[0])
+                    effsame=np.where(ind_eff != ind_eff[0])
+                    #Il doit y avoir au moins 2 valeurs differentes en efficacite et en zenith pour que l interpolateur marche
+                    if((len(zensame[0])!=0) & (len(effsame[0])!=0)):
+                        coord_eff=effMC[ind_eff]
+                        coord_zen = zenMC[ind_zen]
+                        points= (coord_eff, np.cos(coord_zen * math.pi / 180))
+
+                        PSFS1Run[ioff, iEMC] = interpolate.griddata(points, PSFs1[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        if np.isnan(PSFS1Run[ioff, iEMC]):
+                            PSFS1Run[ioff, iEMC] = interpolate.griddata(points, PSFs1[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
+                            
+                        PSFS2Run[ioff, iEMC] = interpolate.griddata(points, PSFs2[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        if np.isnan(PSFS2Run[ioff, iEMC]):
+                            PSFS2Run[ioff, iEMC] = interpolate.griddata(points, PSFs2[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
+                            
+                        PSFS3Run[ioff, iEMC] = interpolate.griddata(points, PSFs3[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        if np.isnan(PSFS3Run[ioff, iEMC]):
+                            PSFS3Run[ioff, iEMC] = interpolate.griddata(points, PSFs3[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
+                            
+                        PSFA2Run[ioff, iEMC] = interpolate.griddata(points, PSFA2[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        if np.isnan(PSFA2Run[ioff, iEMC]):
+                            PSFA2Run[ioff, iEMC] = interpolate.griddata(points, PSFA2[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
+                            
+                        PSFA3Run[ioff, iEMC] = interpolate.griddata(points, PSFA3[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        if np.isnan(PSFA3Run[ioff, iEMC]):
+                            PSFS1Run[ioff, iEMC] = interpolate.griddata(points, PSFA3[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
+                       
+                    else:
+                        PSFS1Run[ioff, iEMC] = -1
+                        PSFS2Run[ioff, iEMC] = -1
+                        PSFS3Run[ioff, iEMC] = -1
+                        PSFA2Run[ioff, iEMC] = -1
+                        PSFA3Run[ioff, iEMC] = -1
+                else:
+                    PSFS1Run[ioff, iEMC] = -1
+                    PSFS2Run[ioff, iEMC] = -1
+                    PSFS3Run[ioff, iEMC] = -1
+                    PSFA2Run[ioff, iEMC] = -1
+                    PSFA3Run[ioff, iEMC] = -1
+            elif (PSFtype == "king"):
+                if(len(ind_zen)>4):
+                    if((len(zensame[0])!=0) & (len(effsame[0])!=0)):
+                        PSFSigRun[ioff, iEMC] = InterSig(EffRun, np.cos(ZenRun * math.pi / 180))
+                        PSFGamRun[ioff, iEMC] = InterGam(EffRun, np.cos(ZenRun * math.pi / 180))
+                    else:
+                        PSFSigRun[ioff, iEMC] = -1
+                        PSFGamRun[ioff, iEMC] = -1    
+                    
     #Ecriture des fichiers fits pour aeff, edisp et psf pour chaque observation
     #AEFF FITS FILE
     c1_area = Column(name='ENERG_LO', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_low))
@@ -159,7 +194,7 @@ for nrun in RunNumber:
     tbhdu_area.header.set("LO_THRES","0.320357620716095","TeV")
     tbhdu_area.header.set("HI_THRES","31.1716079711914","TeV")
     #tbhdu_area.header["EXTNAME"]='EFFECTIVE AREA'
-    tbhdu_area.writeto('hess_aeff_2d_'+nrun+'.fits')
+    tbhdu_area.writeto('hess_aeff_2d_'+nrun+'.fits', clobber=True)
 
     #EDISP FITS FILE
     c1_resol = Column(name='ETRUE_LO', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_low))
@@ -178,7 +213,7 @@ for nrun in RunNumber:
     tbhdu_resol.header.set("EXTNAME","EDISP_2D", "name of this binary table extension ")
     tbhdu_resol.header.set("TDIM7","("+str(binEMC)+","+str(binEreco)+","+str(binoffMC)+")")
     #tbhdu_resol.header["EXTNAME"]='EFFECTIVE RESOL'
-    tbhdu_resol.writeto('hess_edisp_2d_'+nrun+'.fits')
+    tbhdu_resol.writeto('hess_edisp_2d_'+nrun+'.fits', clobber=True)
 
     #PSF FITS FILE
     c1_psf = Column(name='ENERG_LO', format=str(binEMC)+'E', unit='TeV', array=np.atleast_2d(E_true_low))
@@ -199,4 +234,4 @@ for nrun in RunNumber:
         c5_psf = Column(name='SIGMA', format=str(bineffarea)+'E', unit='deg', array=np.expand_dims(PSFSigRun,0))
         tbhdu_psf = pyfits.BinTableHDU.from_columns([c1_psf,c2_psf,c3_psf,c4_psf,c5_psf])      
     tbhdu_psf.header.set("EXTNAME","PSF_2D", "name of this binary table extension ")
-    tbhdu_psf.writeto('hess_psf_'+nrun+'.fits')
+    tbhdu_psf.writeto('hess_psf_'+nrun+'.fits', clobber=True)

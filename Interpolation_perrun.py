@@ -111,37 +111,16 @@ if __name__ == '__main__':
     hdurun = pyfits.open(results.infile)
     ZenRun = 90 - hdurun[1].header["ALT_PNT"]
     EffRun = hdurun[1].header["MUONEFF"] * 100
-    enMC=[0.125]
-    offMC=[2]
+    #enMC=[0.08]
+    #offMC=[2]
     for (iEMC, EMC) in enumerate(enMC):
         for (ioff, off) in enumerate(offMC):
             # print ioff, " ", iEMC
-            iEMC=4
-            ioff=4
+            #iEMC=3
+            #ioff=4
             InterArea = interpolate.interp2d(effMC, np.cos(zenMC * math.pi / 180), IRFArea[iEMC, ioff, :, :])
             InterBiais = interpolate.interp2d(effMC, np.cos(zenMC * math.pi / 180), IRFBiais[iEMC, ioff, :, :])
             InterSigma = interpolate.interp2d(effMC, np.cos(zenMC * math.pi / 180), IRFSigma[iEMC, ioff, :, :])
-            if (PSFtype == "triplegauss"):
-                #interpol_param = dict(fill_value=None)
-                ind_zen, ind_eff= np.where(PSFs1[iEMC, ioff, :, :] != -1)
-                #Il faut qu il y ait au moins 4 eff et 4 zen pour que interp2d marche. en effet dans la doc de interp2d ils disent: The minimum number of data points required along the interpolation axis is (k+1)**2, with k=1 for linear
-                if(len(ind_zen)>4):
-                    #Dans les minimum 4 valeurs, Il faut pas qu il y ait les memes valeurs en zenith et en eff pour toutes les simus. Du coup je regarde si il y a dans le tableau zen et eff si il y a des valeurs differentes de la premiere. Si non, ca veut dire qu'elles sont toutes egales et interp2d marche pas donc on met -1
-                    zensame=np.where(ind_zen != ind_zen[0])
-                    effsame=np.where(ind_eff != ind_eff[0])                    
-                    if((len(zensame[0])!=0) & (len(effsame[0])!=0)):
-                        coord_eff=effMC[ind_eff]
-                        coord_zen = zenMC[ind_zen]
-                        InterS1 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs1[iEMC, ioff, ind_zen, ind_eff], fill_value=None)
-                        InterS2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs2[iEMC, ioff, ind_zen, ind_eff],fill_value=None)
-                        InterS3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFs3[iEMC, ioff, ind_zen, ind_eff],fill_value=None)
-                        InterA2 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA2[iEMC, ioff, ind_zen, ind_eff],fill_value=None)
-                        InterA3 = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFA3[iEMC, ioff, ind_zen, ind_eff],fill_value=None)
-            elif (PSFtype == "king"):
-               if(len(ind_zen)>4):
-                    if((len(zensame[0])!=0) & (len(effsame[0])!=0)): 
-                        InterSig = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFSig[iEMC, ioff, ind_zen, ind_eff])
-                        InterGam = interpolate.interp2d(coord_eff, np.cos(coord_zen * math.pi / 180), PSFGam[iEMC, ioff, ind_zen, ind_eff])
             AreaRun[ioff, iEMC] = InterArea(EffRun, np.cos(ZenRun * math.pi / 180))
             BiaisRun = InterBiais(EffRun, np.cos(ZenRun * math.pi / 180))
             SigmaRun = InterSigma(EffRun, np.cos(ZenRun * math.pi / 180))
@@ -155,21 +134,37 @@ if __name__ == '__main__':
                 ResolRun[ioff, :, iEMC] = ResolRun[ioff, :, iEMC] / norm
 
             if (PSFtype == "triplegauss"):
-                if(len(ind_zen)>4):
+                ind_zen, ind_eff= np.where(PSFs1[iEMC, ioff, :, :] != -1)
+                #If there is at least one simu for this offset and this energy for wich the fit works
+                if(len(ind_zen)!=0):
+                    zensame=np.where(ind_zen != ind_zen[0])
+                    effsame=np.where(ind_eff != ind_eff[0])
+                    #Il doit y avoir au moins 2 valeurs differentes en efficacite et en zenith pour que l interpolateur marche
                     if((len(zensame[0])!=0) & (len(effsame[0])!=0)):
-                        PSFS1Run[ioff, iEMC] = InterS1(EffRun, np.cos(ZenRun * math.pi / 180))
-                        PSFS2Run[ioff, iEMC] = InterS2(EffRun, np.cos(ZenRun * math.pi / 180))
-                        PSFS3Run[ioff, iEMC] = InterS3(EffRun, np.cos(ZenRun * math.pi / 180))           
-                        PSFA2Run[ioff, iEMC] = InterA2(EffRun, np.cos(ZenRun * math.pi / 180))
-                        PSFA3Run[ioff, iEMC] = InterA3(EffRun, np.cos(ZenRun * math.pi / 180))
-                        
-                        if((PSFS1Run[ioff, iEMC]<=0) | (PSFS1Run[ioff, iEMC]<=0)| (PSFS1Run[ioff, iEMC]<=0)| (PSFS1Run[ioff, iEMC]<=0)| (PSFS1Run[ioff, iEMC]<=0)):
-                            PSFS1Run[ioff, iEMC]=-1
-                            PSFS2Run[ioff, iEMC]=-1
-                            PSFS3Run[ioff, iEMC]=-1
-                            PSFA2Run[ioff, iEMC]=-1
-                            PSFA3Run[ioff, iEMC]=-1
-                        
+                        coord_eff=effMC[ind_eff]
+                        coord_zen = zenMC[ind_zen]
+                        points= (coord_eff, np.cos(coord_zen * math.pi / 180))
+
+                        PSFS1Run[ioff, iEMC] = interpolate.griddata(points, PSFs1[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        if np.isnan(PSFS1Run[ioff, iEMC]):
+                            PSFS1Run[ioff, iEMC] = interpolate.griddata(points, PSFs1[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
+                            
+                        PSFS2Run[ioff, iEMC] = interpolate.griddata(points, PSFs2[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        if np.isnan(PSFS2Run[ioff, iEMC]):
+                            PSFS2Run[ioff, iEMC] = interpolate.griddata(points, PSFs2[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
+                            
+                        PSFS3Run[ioff, iEMC] = interpolate.griddata(points, PSFs3[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        if np.isnan(PSFS3Run[ioff, iEMC]):
+                            PSFS3Run[ioff, iEMC] = interpolate.griddata(points, PSFs3[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
+                            
+                        PSFA2Run[ioff, iEMC] = interpolate.griddata(points, PSFA2[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        if np.isnan(PSFA2Run[ioff, iEMC]):
+                            PSFA2Run[ioff, iEMC] = interpolate.griddata(points, PSFA2[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
+                            
+                        PSFA3Run[ioff, iEMC] = interpolate.griddata(points, PSFA3[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='linear')
+                        if np.isnan(PSFA3Run[ioff, iEMC]):
+                            PSFS1Run[ioff, iEMC] = interpolate.griddata(points, PSFA3[iEMC, ioff, ind_zen, ind_eff], (EffRun,np.cos(ZenRun * math.pi / 180)), method='nearest')
+                       
                     else:
                         PSFS1Run[ioff, iEMC] = -1
                         PSFS2Run[ioff, iEMC] = -1
