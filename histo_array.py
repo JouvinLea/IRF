@@ -9,7 +9,7 @@ import argparse
 """
 For one specific config, store the IRF on 4D numpy table for each value of the Zenithal angle, Offset, Efficiency and Energy used for the MCs simulation
 Example of commande line to run to create this 4D table with the directory of the MC simulation output and the config name as argument
-././histo_array.py '/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF' 'std_north_1b'
+./histo_array.py '/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF' 'std_north_1b'
 """
 
 if __name__ == '__main__':
