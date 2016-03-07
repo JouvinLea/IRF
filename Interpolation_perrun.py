@@ -18,7 +18,7 @@ def gauss(x, sigma, mean):
 """
 Extract and interpolate IRF for a specific run and config
 Example of command line to run with the fits event file of the observation and the 4D numpy table matching with the config we are interested in
-./Interpolation_perrun.py 'run_0054749_std_north_1b_eventlist.fits' 'IRFstd_north_1b.npz' 'PSF_triplegauss_elm_south_stereo_save.npz' 'triplegauss'
+./Interpolation_perrun.py 'run_0054749_std_north_1b_eventlist.fits' 'IRF_std_north_1b.npz' 'PSF_triplegauss_std_north_1b.npz' 'triplegauss'
 """
 
 if __name__ == '__main__':

@@ -29,7 +29,7 @@ PathTablePSF="/Users/jouvin/Desktop/these/WorkGAMMAPI/IRF/PSF"
 
 coupure=sys.argv[2]
 PSFtype=sys.argv[3]
-IRF=np.load(PathTableIRF+"/IRF"+coupure+".npz")
+IRF=np.load(PathTableIRF+"/IRF_"+coupure+".npz")
 IRFArea=IRF["TableArea"]
 IRFSigma=IRF["TableSigma"]
 IRFBiais=IRF["TableBiais"]
@@ -39,8 +39,7 @@ zenMC=IRF["zenMC"]
 effMC=IRF["effMC"]
 offMC=IRF["offMC"]
 if(PSFtype=="triplegauss"):
-    #PSF=np.load(PathTablePSF+"/PSF_triplegauss_"+coupure+".npz")
-    PSF=np.load(PathTablePSF+"/PSF_triplegauss_elm_south_stereo_save.npz")
+    PSF=np.load(PathTablePSF+"/"+coupure+"/PSF_triplegauss_"+coupure+".npz")
     PSFs1=PSF["TableSigma1"]
     PSFs2=PSF["TableSigma2"]
     PSFs3=PSF["TableSigma3"]
