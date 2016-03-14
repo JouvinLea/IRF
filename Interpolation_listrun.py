@@ -233,4 +233,4 @@ for nrun in RunNumber:
         c5_psf = Column(name='SIGMA', format=str(bineffarea)+'E', unit='deg', array=np.expand_dims(PSFSigRun,0))
         tbhdu_psf = pyfits.BinTableHDU.from_columns([c1_psf,c2_psf,c3_psf,c4_psf,c5_psf])      
     tbhdu_psf.header.set("EXTNAME","PSF_2D", "name of this binary table extension ")
-    tbhdu_psf.writeto('hess_psf_'+nrun+'.fits', clobber=True)
+    tbhdu_psf.writeto('hess_psf_3gauss_'+nrun+'.fits', clobber=True)
