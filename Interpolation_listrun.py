@@ -190,8 +190,8 @@ for nrun in RunNumber:
     tbhdu_area.header.set("EXTNAME","EFFECTIVE AREA", "name of this binary table extension ")
     tbhdu_area.header.set("TDIM5","("+str(binEMC)+","+str(binoffMC)+")")
     tbhdu_area.header.set("TDIM6","("+str(binEMC)+","+str(binoffMC)+")")
-    tbhdu_area.header.set("LO_THRES","0.320357620716095","TeV")
-    tbhdu_area.header.set("HI_THRES","31.1716079711914","TeV")
+    tbhdu_area.header.set("LO_THRES",0.320357620716095,"TeV")
+    tbhdu_area.header.set("HI_THRES",31.1716079711914,"TeV")
     #tbhdu_area.header["EXTNAME"]='EFFECTIVE AREA'
     tbhdu_area.writeto('hess_aeff_2d_'+nrun+'.fits', clobber=True)
 
