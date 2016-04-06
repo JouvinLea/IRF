@@ -81,6 +81,6 @@ if __name__ == '__main__':
                 TableArea[:, ioff, izen, ieff] = AreaArray
                 TableBiais[:, ioff, izen, ieff] = AreaBiais
                 TableSigma[:, ioff, izen, ieff] = AreaSigma
-
-    np.savez("IRF_"+results.config+".npz", TableArea=TableArea, TableBiais=TableBiais, TableSigma=TableSigma, enMC=enMC, lnenMC=lnenMC,
+    outdir="output_4Dnumpyarrays"
+    np.savez(outdir+"/IRF_"+results.config+".npz", TableArea=TableArea, TableBiais=TableBiais, TableSigma=TableSigma, enMC=enMC, lnenMC=lnenMC,
              zenMC=zenMC, offMC=offMC, effMC=effMC)
